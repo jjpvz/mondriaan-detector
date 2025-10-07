@@ -6,7 +6,7 @@ __pycache__/
 alldata/*
 scaled/*
 
-settings.py
+src/settings.py
 
 # C extensions
 *.so
