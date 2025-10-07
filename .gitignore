@@ -6,7 +6,7 @@ __pycache__/
 alldata/*
 scaled/*
 
-script.py
+settings.py
 
 # C extensions
 *.so
