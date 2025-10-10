@@ -6,6 +6,9 @@ __pycache__/
 alldata/*
 scaled/*
 
+# Machine learning model files
+*.joblib
+
 src/settings.py
 
 # C extensions
