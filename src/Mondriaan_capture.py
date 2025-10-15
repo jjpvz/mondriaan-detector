@@ -23,7 +23,9 @@ if Camera_activate:
         exit(0)
 else:
     frame = cv.imread(str(TEST_IMAGE_PATH))
-
+    if frame is None:
+        print("Geen foto gevonden. Programma beëindigd.")
+        exit(0)
 
 resized_frame = resize_image(frame, 1920, 1080)
 rgb_frame = cv.cvtColor(resized_frame, cv.COLOR_BGR2RGB)

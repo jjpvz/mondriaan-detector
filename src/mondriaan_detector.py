@@ -11,6 +11,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import joblib
 
+# toelichting op keuzes
+
+# takes image from setting.py folder_path_all
 img_set, paths = img_import_resize(folder_path_all)
 features_list = processing_image(img_set, paths)
 
