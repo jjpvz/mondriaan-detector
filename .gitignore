@@ -10,6 +10,7 @@ scaled/*
 *.joblib
 
 src/settings.py
+*.ipynb
 
 # C extensions
 *.so
