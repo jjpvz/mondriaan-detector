@@ -12,6 +12,7 @@ alldata_full/*
 *.joblib
 
 src/settings.py
+*.ipynb
 
 # C extensions
 *.so
