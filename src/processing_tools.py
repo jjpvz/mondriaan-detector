@@ -280,7 +280,7 @@ def img_import_resize(folder_path_all, show_progress=True):
         
     return img_rgb, files_selected
 
-# pipeline function to process images and extract features
+# pipeline function to preprocess images and extract features
 def processing_image(image_set, paths, show_progress=True):
     processed_features = []
     total_images = len(image_set)
@@ -289,14 +289,17 @@ def processing_image(image_set, paths, show_progress=True):
         print(f"Verwerken van {total_images} afbeeldingen voor feature extractie...")
     
     for i, img in enumerate(image_set):
+        # image will be preprocessed, roi extracted and background removed
         pre_img = preprocess_image(img)
         
+        # create color masks
         mask_upper = maskColor(pre_img, 0, 11, False)
         mask_lower = maskColor(pre_img, 169, 180, False)
         red_mask = cv.bitwise_or(mask_upper, mask_lower)
         yellow_mask = maskColor(pre_img, 22, 38, True)
         blue_mask = maskColor(pre_img, 90, 130, True)
         
+        # extract features and add image_id and label
         features = prepare_features(pre_img, red_mask, yellow_mask, blue_mask)
         features['image_id'] = paths[i].name
         features['label'] = paths[i].parent.name

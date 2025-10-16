@@ -11,15 +11,15 @@ base_dir = r"C:\GIT\mondriaan-detector\alldata"
 folders = ["mondriaan1", "mondriaan2", "mondriaan3", "mondriaan4", "niet_mondriaan"]
 
 # Augmentatie-instellingen
-border_color = (255, 255, 255)  # wit
+border_color = (0, 0, 0)  # zwart
 transform = A.Compose([
-    A.Rotate(limit=30, border_mode=cv2.BORDER_CONSTANT, fill_value=border_color, p=0.8),
-    A.Affine(shear={'x': (-15, 15)}, fill_value=border_color, p=0.5),
-    A.RandomScale(scale_limit=0.2, p=0.5),
+    A.Rotate(limit=3, border_mode=cv2.BORDER_CONSTANT, fill_value=border_color, p=0.8),
+   # A.Affine(shear={'x': (-20, 20)}, fill_value=border_color, p=0.5),
+   # A.RandomScale(scale_limit=0.2, p=0.5),
     A.HorizontalFlip(p=0.5),
     A.VerticalFlip(p=0.2),
-    A.RandomBrightnessContrast(p=0.7),
-    A.GaussNoise(noise_scale_factor=(10.0, 50.0), p=0.5)
+   # A.RandomBrightnessContrast(p=0.7),
+   # A.GaussNoise(noise_scale_factor=(10.0, 50.0), p=0.5)
 ])
 
 # Verwerk elke map apart
@@ -36,7 +36,7 @@ for folder in folders:
         continue
 
     start_num = 131
-    target_num = 500
+    target_num = 180
     counter = start_num
     total_needed = target_num - start_num + 1
 

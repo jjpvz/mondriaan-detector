@@ -5,6 +5,8 @@ __pycache__/
 
 alldata/*
 scaled/*
+alldata_old/*
+alldata_full/*
 
 # Machine learning model files
 *.joblib

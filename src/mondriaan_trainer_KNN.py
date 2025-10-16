@@ -1,4 +1,4 @@
-from features import img_import_resize, processing_image
+from processing_tools import img_import_resize, processing_image
 import cv2 as cv
 import numpy as np
 from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, StratifiedKFold
@@ -67,3 +67,7 @@ print(f"Mean CV accuracy: {np.mean(cv_scores):.4f} (+/- {np.std(cv_scores) * 2:.
 
 test_score = clf.score(X_test, y_test)
 print(f"Test set accuracy: {test_score:.4f}")
+
+model_path = "mondriaan_knn_model.joblib"
+joblib.dump(clf, model_path)
+print(f"Model saved as: {model_path}")
