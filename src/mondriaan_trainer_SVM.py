@@ -1,3 +1,5 @@
+from sklearn import base
+from sklearn.calibration import CalibratedClassifierCV
 from processing_tools import img_import_resize, processing_image
 import cv2 as cv
 import numpy as np
@@ -6,6 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.impute import SimpleImputer
 from settings import folder_path_all
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -23,6 +26,10 @@ features_list = processing_image(img_set, paths)
 
 # create a dataframe from the features list
 dataset = pd.DataFrame(features_list)
+
+dataset.to_csv("data.csv", index=False)
+
+
 # separate features and labels
 X = dataset.drop(['image_id','label'], axis=1)
 Y = dataset['label']
@@ -30,7 +37,7 @@ Y = dataset['label']
 # split the dataset in training and test set, 80% training, 20% test
 # stratify=Y to maintain the same class distribution in both sets
 X_train, X_test, y_train, y_test = train_test_split(
-    X, Y, test_size=0.2, random_state=42, stratify=Y)
+    X, Y, test_size=0.3, random_state=42, stratify=Y)
 
 
 # below is the pipeline description
@@ -41,9 +48,11 @@ X_train, X_test, y_train, y_test = train_test_split(
 # probability=True to enable probability estimates, to calculate the confince of the predictions
 # random_state=42 for reproducibility
 clf = Pipeline([
+    ("imputer", SimpleImputer(strategy="median", add_indicator=True)),
     ('scaler', StandardScaler()), 
     ('svc', SVC(kernel='rbf', gamma=0.001, C=100., probability=True, random_state=42))
 ])
+
 
 # train the model
 clf.fit(X_train, y_train)

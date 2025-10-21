@@ -2,7 +2,7 @@ import cv2 as cv
 import numpy as np
 import pandas as pd
 from settings import MODEL_PATH, TEST_IMAGE_PATH
-from main_helpers import capture_from_webcam, load_model, processing_image, resource_path, show_prediction_window, show_input_selection_window
+from main_helpers import capture_from_webcam, load_model, processing_image, show_prediction_window, show_input_selection_window
 from processing_tools import resize_image
 
 # make a MODEL_PATH and TEST_IMAGE_PATH in settings.py
@@ -11,9 +11,8 @@ from processing_tools import resize_image
 # Test image can be changed to any image you want to test
 # joblib model must be in the same folder as the src folder or give full path
 
-path_model = resource_path("mondriaan_svm_model.joblib")
 # load the model from model path if not found, raise error
-clf = load_model(path_model)
+clf = load_model(MODEL_PATH)
 
 # Show input selection window
 use_camera, image_path = show_input_selection_window()

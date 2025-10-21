@@ -35,9 +35,6 @@ def resize_image(img, standard_width, standard_height):
         img = cv.rotate(img, cv.ROTATE_90_CLOCKWISE)
         h, w = img.shape[:2]
 
-
-    # resize with same aspect ratio and padding
-    h, w = img.shape[:2]
         
     # calculate scale to fit within standard dimensions
     scale = min(standard_width / w, standard_height / h)
@@ -59,14 +56,24 @@ def resize_image(img, standard_width, standard_height):
 
     return canvas
 
-def maskColor(img, min_hue, max_hue, invert=False):
-    img_hsv = cv.cvtColor(img, cv.COLOR_RGB2HSV)
-    light = (min_hue,50,50)
-    dark  = (max_hue,255,255)
-    mask = cv.inRange(img_hsv, light, dark)
+
+
+def mask_feature_color(img_rgb, h_range, s_min, v_min, invert=False):
+    hsv = cv.cvtColor(img_rgb, cv.COLOR_RGB2HSV)
+    masks = []
+    for (h1, h2) in h_range:  # lijst van (minH, maxH) tuples
+        lower = (h1, s_min, v_min)
+        upper = (h2, 255, 255)
+        masks.append(cv.inRange(hsv, lower, upper))
+    mask = masks[0]
+    for m in masks[1:]:
+        mask = cv.bitwise_or(mask, m)
+    # kleine schoonmaak
+    kernel = cv.getStructuringElement(cv.MORPH_RECT, (7,7))
+    mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel, iterations=1)
+    mask = cv.morphologyEx(mask, cv.MORPH_OPEN,  kernel, iterations=1)
     if invert:
         mask = cv.bitwise_not(mask)
-
     return mask
 
 def getLargestContour(img_BW):
@@ -83,6 +90,61 @@ def getContourExtremes(contour):
 
     return np.array((left, right, top, bottom))
 
+def order_quad_points(pts):
+   # sort the 4 points as top-left, top-right, bottom-right, bottom-left
+    pts = np.array(pts, dtype=np.float32)
+    s = pts.sum(axis=1)
+    diff = np.diff(pts, axis=1).ravel()
+    tl = pts[np.argmin(s)]
+    br = pts[np.argmax(s)]
+    tr = pts[np.argmin(diff)]
+    bl = pts[np.argmax(diff)]
+    return np.array([tl, tr, br, bl], dtype=np.float32)
+
+def get_quadrilateral_from_contour(contour):
+    # get corners from contour
+    peri = cv.arcLength(contour, True)
+    approx = cv.approxPolyDP(contour, 0.02 * peri, True)
+    if len(approx) == 4:
+        return order_quad_points(approx.reshape(-1, 2))
+    # fallback: minAreaRect if no quad found
+    rect = cv.minAreaRect(contour.reshape(-1,1,2))
+    box = cv.boxPoints(rect)
+    return order_quad_points(box)
+
+
+def warp_image(cropped_img):
+    
+    gray_img = cv.cvtColor(cropped_img, cv.COLOR_RGB2GRAY)
+    contour_in_cropped = getLargestContour(gray_img)
+    # 1) src points from contour
+    src = get_quadrilateral_from_contour(contour_in_cropped)  # TL,TR,BR,BL
+
+    # 2) targetsize of quad
+    (tl, tr, br, bl) = src
+    w_top  = np.linalg.norm(tr - tl)
+    w_bot  = np.linalg.norm(br - bl)
+    h_left = np.linalg.norm(bl - tl)
+    h_right= np.linalg.norm(br - tr)
+    maxW = int(round(max(w_top, w_bot)))
+    maxH = int(round(max(h_left, h_right)))
+
+    # 3) doelpunten en homografie
+    dst = np.array([
+        [0,     0],
+        [maxW-1,0],
+        [maxW-1,maxH-1],
+        [0,     maxH-1]
+    ], dtype=np.float32)
+
+    M = cv.getPerspectiveTransform(src, dst)
+
+    # 4) warping
+    warped = cv.warpPerspective(cropped_img, M, (maxW, maxH),
+                                flags=cv.INTER_LINEAR,
+                                borderMode=cv.BORDER_REPLICATE)
+    return warped
+
 def preprocess_image(img_rgb):
     """
     Preprocess a painting image.
@@ -94,7 +156,7 @@ def preprocess_image(img_rgb):
     """
     
     # --- Background removal ---
-    mask = maskColor(img_rgb, 67, 95, True)
+    mask = mask_feature_color(img_rgb, [(67, 95)], 50, 50, True)
     masked_img = cv.bitwise_and(img_rgb, img_rgb, mask=mask)
 
     # --- Extract ROI via largest contour ---
@@ -104,8 +166,10 @@ def preprocess_image(img_rgb):
     x_min, x_max = left[0], right[0]
     y_min, y_max = top[1], bottom[1]
     cropped_img = masked_img[y_min:y_max, x_min:x_max]
-
-    return cropped_img
+    
+    warped_img = warp_image(cropped_img)
+    
+    return warped_img
 
 def apply_morph_operations(mask, masked_img, kernel_size=3):
     kernel = np.ones((kernel_size, kernel_size), np.uint8)
@@ -149,13 +213,19 @@ def color_percentage(mask):
     color_pixels = cv.countNonZero(mask)
     return (color_pixels / total_pixels) * 100
 
-def center_of_mass(mask):
-    moments = cv.moments(mask)
-    if moments["m00"] == 0:
-        return (0,0)  # no pixels in mask
-    cx = moments["m10"] / moments["m00"]
-    cy = moments["m01"] / moments["m00"]
-    return (int(cx), int(cy))
+def center_of_mass(mask, min_area=500):
+    # min_area: low threshold to consider as valid color mass
+    color_pixels = int(cv.countNonZero(mask))
+    if color_pixels < min_area:
+        return None  # no reliable color mass
+
+    m = cv.moments(mask, binaryImage=True)
+    if m["m00"] == 0:
+        return None
+
+    cx = m["m10"] / m["m00"]
+    cy = m["m01"] / m["m00"]
+    return (float(cx), float(cy))
 
 def compute_aspect_ratio(image):
     height, width = image.shape[:2]
@@ -211,15 +281,19 @@ def prepare_features(cropped_img, red_mask, yellow_mask, blue_mask):
     yellow_com = center_of_mass(yellow_mask)
     blue_com = center_of_mass(blue_mask)
 
+    def norm_dist(p):
+        return np.nan if p is None else calc_distance(p, image_center) / image_diag
+
     # Distances to center (normalized)
-    red_dist = calc_distance(red_com, image_center) / image_diag if red_com is not None else np.nan
-    yellow_dist = calc_distance(yellow_com, image_center) / image_diag if yellow_com is not None else np.nan
-    blue_dist = calc_distance(blue_com, image_center) / image_diag if blue_com is not None else np.nan
+    red_dist = norm_dist(red_com)
+    yellow_dist = norm_dist(yellow_com)
+    blue_dist = norm_dist(blue_com)
 
     # Color percentages
     red_pct = color_percentage(red_mask)
     yellow_pct = color_percentage(yellow_mask)
     blue_pct = color_percentage(blue_mask)
+    color_coverage = red_pct + yellow_pct + blue_pct
 
     features = {
         "aspect_ratio": aspect_ratio,
@@ -228,7 +302,8 @@ def prepare_features(cropped_img, red_mask, yellow_mask, blue_mask):
         "blue_dist": blue_dist,
         "red_pct": red_pct,
         "yellow_pct": yellow_pct,
-        "blue_pct": blue_pct
+        "blue_pct": blue_pct,
+        "color_coverage": color_coverage
     }
     return features
 
@@ -284,6 +359,7 @@ def img_import_resize(folder_path_all, show_progress=True):
 def processing_image(image_set, paths, show_progress=True):
     processed_features = []
     total_images = len(image_set)
+    k = cv.getStructuringElement(cv.MORPH_RECT, (15,15))
     
     if show_progress:
         print(f"Verwerken van {total_images} afbeeldingen voor feature extractie...")
@@ -292,12 +368,10 @@ def processing_image(image_set, paths, show_progress=True):
         # image will be preprocessed, roi extracted and background removed
         pre_img = preprocess_image(img)
         
-        # create color masks
-        mask_upper = maskColor(pre_img, 0, 11, False)
-        mask_lower = maskColor(pre_img, 169, 180, False)
-        red_mask = cv.bitwise_or(mask_upper, mask_lower)
-        yellow_mask = maskColor(pre_img, 22, 38, True)
-        blue_mask = maskColor(pre_img, 90, 130, True)
+        red_mask = mask_feature_color(pre_img, [(0, 11), (169, 180)], 110, 70)
+        yellow_mask = mask_feature_color(pre_img, [(18, 38)], 70, 90)
+        blue_mask_temp = mask_feature_color(pre_img, [(105, 130)], 100, 60)
+        blue_mask = cv.morphologyEx(blue_mask_temp, cv.MORPH_OPEN, k, iterations=1)
         
         # extract features and add image_id and label
         features = prepare_features(pre_img, red_mask, yellow_mask, blue_mask)
@@ -315,3 +389,23 @@ def processing_image(image_set, paths, show_progress=True):
         print("Feature extractie voltooid!")
         
     return processed_features
+
+def scatter_features_raw(df, x_feat, y_feat):
+    plt.figure(figsize=(8,6))
+
+    for label in df["label"].unique():
+        mask = df["label"] == label
+        df_label = df.loc[mask, [x_feat, y_feat]]
+        
+        plt.scatter(
+            df_label[x_feat],
+            df_label[y_feat],
+            alpha=0.6,
+            label=label
+        )
+
+    plt.xlabel(x_feat)
+    plt.ylabel(y_feat)
+    plt.title(f"Scatterplot: {x_feat} vs {y_feat} (individual points)")
+    plt.legend()
+    plt.show()

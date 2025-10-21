@@ -13,6 +13,8 @@ alldata_full/*
 
 src/settings.py
 *.ipynb
+mondriaan_detector.py
+test.py
 
 # C extensions
 *.so
