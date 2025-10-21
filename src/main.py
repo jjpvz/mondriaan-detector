@@ -57,7 +57,7 @@ pred_label = clf.classes_[np.argmax(prob[0])]
 max_p = float(np.max(prob[0]))
 
 # Check for confidence threshold
-if max_p >= 0.9:
+if max_p >= 0.8:
     final_pred = pred_label
 else:
     final_pred = "niet_mondriaan"

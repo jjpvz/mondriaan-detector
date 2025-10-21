@@ -14,6 +14,10 @@ def display_image(img, title=None,):
     plt.axis('off')
     plt.show()
 
+def display_image_cv(img, title="Image"):
+    cv.imshow(title, img)
+    cv.waitKey(0)      # wacht tot je een toets indrukt
+    cv.destroyAllWindows()
 
 def resize_image(img, standard_width, standard_height):
     """

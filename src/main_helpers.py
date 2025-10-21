@@ -2,7 +2,7 @@ import joblib
 import cv2 as cv
 import numpy as np
 import pandas as pd
-from processing_tools import preprocess_image, mask_feature_color, prepare_features
+from processing_tools import preprocess_image, mask_feature_color, prepare_features, display_image_cv
 import os, sys
 import tkinter as tk
 from tkinter import ttk, filedialog
@@ -58,6 +58,7 @@ def processing_image(frame):
     # preprocess image for feature extraction    
     pre_img = preprocess_image(frame)
 
+    display_image_cv(pre_img, "Voorverwerkte Afbeelding")
     # create color masks    
     red_mask = mask_feature_color(pre_img, [(0, 11), (169, 180)], 110, 70)
     yellow_mask = mask_feature_color(pre_img, [(18, 38)], 70, 90)
