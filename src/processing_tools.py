@@ -15,6 +15,11 @@ def display_image(img, title=None,):
     plt.show()
 
 def display_image_cv(img, title="Image"):
+    
+    brg_img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
+    img = brg_img
+    cv.namedWindow(title, cv.WINDOW_NORMAL)
+    cv.resizeWindow(title, 800, 600)
     cv.imshow(title, img)
     cv.waitKey(0)      # wacht tot je een toets indrukt
     cv.destroyAllWindows()
@@ -162,6 +167,7 @@ def preprocess_image(img_rgb):
     # --- Background removal ---
     mask = mask_feature_color(img_rgb, [(67, 95)], 50, 50, True)
     masked_img = cv.bitwise_and(img_rgb, img_rgb, mask=mask)
+    
 
     # --- Extract ROI via largest contour ---
     gray = cv.cvtColor(masked_img, cv.COLOR_RGB2GRAY)

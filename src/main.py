@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from settings import MODEL_PATH, TEST_IMAGE_PATH
 from main_helpers import capture_from_webcam, load_model, processing_image, show_prediction_window, show_input_selection_window
-from processing_tools import resize_image
+from processing_tools import resize_image, display_image_cv
 
 # make a MODEL_PATH and TEST_IMAGE_PATH in settings.py
 # MODEL_PATH = "mondriaan_svm_model.joblib"

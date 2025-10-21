@@ -58,7 +58,7 @@ def processing_image(frame):
     # preprocess image for feature extraction    
     pre_img = preprocess_image(frame)
 
-    display_image_cv(pre_img, "Voorverwerkte Afbeelding")
+    
     # create color masks    
     red_mask = mask_feature_color(pre_img, [(0, 11), (169, 180)], 110, 70)
     yellow_mask = mask_feature_color(pre_img, [(18, 38)], 70, 90)
