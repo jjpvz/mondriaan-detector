@@ -58,11 +58,17 @@ def processing_image(frame):
     # preprocess image for feature extraction    
     pre_img = preprocess_image(frame)
 
+    #display_image_cv(pre_img, "Voorverwerkte afbeelding")
+
     # create color masks    
     red_mask = mask_feature_color(pre_img, [(0, 11), (169, 180)], 110, 70)
     yellow_mask = mask_feature_color(pre_img, [(18, 38)], 70, 90)
     blue_mask_temp = mask_feature_color(pre_img, [(105, 130)], 100, 60)
     blue_mask = cv.morphologyEx(blue_mask_temp, cv.MORPH_OPEN, k, iterations=1)
+
+    #display_image_cv(red_mask, "Rood masker")
+    #display_image_cv(yellow_mask, "Geel masker")
+    #display_image_cv(blue_mask, "Blauw masker")
 
     # extract features and add image_id and label
     features = prepare_features(pre_img, red_mask, yellow_mask, blue_mask)

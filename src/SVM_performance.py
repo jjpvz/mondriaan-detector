@@ -1,9 +1,10 @@
 from sklearn import base
 from sklearn.calibration import CalibratedClassifierCV
-from processing_tools import img_import_resize, processing_image
+from processing_tools import img_import_resize, processing_image, plot_learning_curve, save_plot
 import cv2 as cv
+from pathlib import Path
 import numpy as np
-from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV
+from sklearn.model_selection import train_test_split, cross_val_score, GridSearchCV, ShuffleSplit
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
@@ -18,17 +19,21 @@ import joblib
 # takes image from setting.py folder_path_all
 # in img_import_resize the images are imported from subfolders, are resized to 1920x1080 and returned in img_set
 # paths are the paths of the images, used to extract the label from the parent folder name
-img_set, paths = img_import_resize(folder_path_all)
+#img_set, paths = img_import_resize(folder_path_all)
 
 # in processing_image the images are preprocessed, color masks are made and features are extracted
 # the features are returned as a list of dictionaries
-features_list = processing_image(img_set, paths)
+#features_list = processing_image(img_set, paths)
 
 # create a dataframe from the features list
-dataset = pd.DataFrame(features_list)
+#dataset = pd.DataFrame(features_list)
 
-dataset.to_csv("data.csv", index=False)
+#dataset.to_csv("data.csv", index=False)
 
+data_csv_path = Path("data.csv")
+if data_csv_path.exists():
+    print(f"Lezen van dataset uit: {data_csv_path}")
+    dataset = pd.read_csv(data_csv_path)
 
 # separate features and labels
 X = dataset.drop(['image_id','label'], axis=1)
@@ -63,14 +68,11 @@ y_pred = clf.predict(X_test)
 print(classification_report(y_test, y_pred))
 print(confusion_matrix(y_test, y_pred))
 
-
-# Plot confusion matrix
-fig, ax = plt.subplots(figsize=(10, 8))
-ConfusionMatrixDisplay.from_predictions(y_test, y_pred, ax=ax, cmap='Blues')
-ax.set_title('Confusion Matrix for Digits Classification')
-plt.tight_layout()
-
-
+cm = confusion_matrix(y_test, y_pred)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=clf.classes_)
+disp.plot(cmap=plt.cm.Blues, values_format='d')
+plt.title("Confusion Matrix")
+plt.show()
 
 # perform cross-validation to evaluate model stability
 cv_scores = cross_val_score(clf, X_train, y_train, cv=4, scoring="accuracy")
@@ -78,6 +80,8 @@ cv_scores = cross_val_score(clf, X_train, y_train, cv=4, scoring="accuracy")
 print(f"Cross-validation scores: {cv_scores}")
 print(f"Mean CV accuracy: {np.mean(cv_scores):.4f} (+/- {np.std(cv_scores) * 2:.4f})")
 
-test_score = clf.score(X_test, y_test)
-print(f"Test set accuracy: {test_score:.4f}")
+cv = ShuffleSplit(n_splits=100, test_size=0.2, random_state=42)
+plt = plot_learning_curve(clf, X_train, y_train, cv=cv, n_jobs=-1)
+#save_plot(plt)
+plt.show()
 

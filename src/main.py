@@ -60,11 +60,12 @@ pred_label = clf.classes_[np.argmax(prob[0])]
 max_p = float(np.max(prob[0]))
 
 # Check for confidence threshold
-if max_p >= 0.8:
+if max_p >= 0.6:
     temp_pred = pred_label
 else:
     temp_pred = "niet_mondriaan"
 
+# Apply additional rules based on color coverage for each Mondriaan class
 match temp_pred:
     case "mondriaan1":
         if color_coverage < 5.0 or color_coverage > 20.0:
