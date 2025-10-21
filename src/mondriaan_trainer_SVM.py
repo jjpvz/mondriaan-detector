@@ -50,7 +50,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 clf = Pipeline([
     ("imputer", SimpleImputer(strategy="median", add_indicator=True)),
     ('scaler', StandardScaler()), 
-    ('svc', SVC(kernel='rbf', gamma=0.001, C=100., probability=True, random_state=42))
+    ('svc', SVC(kernel='rbf', gamma=0.001, C=80., probability=True, random_state=42))
 ])
 
 

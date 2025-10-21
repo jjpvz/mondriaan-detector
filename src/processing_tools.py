@@ -313,7 +313,6 @@ def prepare_features(cropped_img, red_mask, yellow_mask, blue_mask):
         "red_pct": red_pct,
         "yellow_pct": yellow_pct,
         "blue_pct": blue_pct,
-        "color_coverage": color_coverage
     }
     return features
 

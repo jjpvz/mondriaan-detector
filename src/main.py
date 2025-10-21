@@ -45,7 +45,10 @@ df = pd.DataFrame(data)
 print(df.head())
 
 # Extract color coverage feature for black image filtering
-color_coverage = df['color_coverage'].iloc[0]
+blue_pct = df['blue_pct'].iloc[0]
+red_pct = df['red_pct'].iloc[0]
+yellow_pct = df['yellow_pct'].iloc[0]
+color_coverage = red_pct + yellow_pct + blue_pct
 print(f"Kleur dekking: {color_coverage:.2f}%")
 
 # make prediction using the loaded model
@@ -58,9 +61,39 @@ max_p = float(np.max(prob[0]))
 
 # Check for confidence threshold
 if max_p >= 0.8:
-    final_pred = pred_label
+    temp_pred = pred_label
 else:
-    final_pred = "niet_mondriaan"
+    temp_pred = "niet_mondriaan"
+
+match temp_pred:
+    case "mondriaan1":
+        if color_coverage < 5.0 or color_coverage > 20.0:
+            final_pred = "niet_mondriaan"
+            max_p = 0
+        else:
+            final_pred = temp_pred
+    case "mondriaan2":
+        if color_coverage < 35.0 or color_coverage > 50.0:
+            final_pred = "niet_mondriaan"
+            max_p = 0
+        else:
+            final_pred = temp_pred
+    case "mondriaan3":
+        if color_coverage < 7.0 or color_coverage > 25.0:
+            final_pred = "niet_mondriaan"
+            max_p = 0
+        else:
+            final_pred = temp_pred
+    case "mondriaan4":
+        if color_coverage < 5.0 or color_coverage > 20.0:
+            final_pred = "niet_mondriaan"
+            max_p = 0
+        else:
+            final_pred = temp_pred
+    case "niet_mondriaan":
+        final_pred = temp_pred
+    case _:
+        final_pred = temp_pred
 
 # Filter out black/empty images based on color coverage
 if color_coverage < 5.0:
@@ -70,5 +103,5 @@ if color_coverage < 5.0:
 print(f"Voorspelling: {final_pred}")
 print(f"Zekerheid voor ({pred_label}): {max_p*100:.2f}%")
 
-show_prediction_window(resized_frame, final_pred, prob)
+show_prediction_window(resized_frame, final_pred, max_p)
 

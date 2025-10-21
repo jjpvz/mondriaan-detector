@@ -58,14 +58,12 @@ def processing_image(frame):
     # preprocess image for feature extraction    
     pre_img = preprocess_image(frame)
 
-    
     # create color masks    
     red_mask = mask_feature_color(pre_img, [(0, 11), (169, 180)], 110, 70)
     yellow_mask = mask_feature_color(pre_img, [(18, 38)], 70, 90)
     blue_mask_temp = mask_feature_color(pre_img, [(105, 130)], 100, 60)
     blue_mask = cv.morphologyEx(blue_mask_temp, cv.MORPH_OPEN, k, iterations=1)
 
-    
     # extract features and add image_id and label
     features = prepare_features(pre_img, red_mask, yellow_mask, blue_mask)
     processed_features.append(features)
@@ -113,27 +111,27 @@ def show_prediction_window(image, prediction, probability):
     if prediction == "mondriaan1":
         prediction_text = "✓ Dit is Mondriaan 1!"
         prediction_color = '#2E8B57'
-        confidence_text = f"Zekerheid: {max(probability[0]) * 100:.2f}%"
+        confidence_text = f"Zekerheid: {probability * 100:.2f}%"
     elif prediction == "mondriaan2":
         prediction_text = "✓ Dit is Mondriaan 2!"
         prediction_color = '#2E8B57'
-        confidence_text = f"Zekerheid: {max(probability[0]) * 100:.2f}%"
+        confidence_text = f"Zekerheid: {probability * 100:.2f}%"
     elif prediction == "mondriaan3":
         prediction_text = "✓ Dit is Mondriaan 3!"
         prediction_color = '#2E8B57'
-        confidence_text = f"Zekerheid: {max(probability[0]) * 100:.2f}%"
+        confidence_text = f"Zekerheid: {probability * 100:.2f}%"
     elif prediction == "mondriaan4":
         prediction_text = "✓ Dit is Mondriaan 4!"
         prediction_color = '#2E8B57'
-        confidence_text = f"Zekerheid: {max(probability[0]) * 100:.2f}%"
+        confidence_text = f"Zekerheid: {probability * 100:.2f}%"
     elif prediction == "niet_mondriaan":
         prediction_text = "✗ Dit is geen Mondriaan"
         prediction_color = '#DC143C'
-        confidence_text = f"Zekerheid: {max(probability[0]) * 100:.2f}%"
+        confidence_text = f"Zekerheid: {probability * 100:.2f}%"
     elif prediction == "mondriaan_onbekend":
         prediction_text = "✗ Te lage zekerheid, maak nieuwe foto"
         prediction_color = '#FFA500'
-        confidence_text = f"Zekerheid: {max(probability[0]) * 100:.2f}%"
+        confidence_text = f"Zekerheid: {probability * 100:.2f}%"
 
     
     prediction_label = ttk.Label(result_frame, text=prediction_text, 
