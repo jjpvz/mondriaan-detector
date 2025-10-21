@@ -6,6 +6,7 @@ import numpy as np
 from scipy.stats import entropy
 import pandas as pd
 
+# USE THIS FOR NOTEBOOK
 def display_image(img, title=None,):
     plt.figure(figsize=(6,6))
     plt.imshow(img)
@@ -13,6 +14,12 @@ def display_image(img, title=None,):
         plt.title(title)
     plt.axis('off')
     plt.show()
+
+# USE THIS FOR MAIN.PY OR ANOTHER PYTHON FILE
+def display_image_cv(img, title="Image"):
+    cv.imshow(title, img)
+    cv.waitKey(0)      # wacht tot je een toets indrukt
+    cv.destroyAllWindows()
 
 
 def resize_image(img, standard_width, standard_height):
@@ -280,6 +287,12 @@ def prepare_features(cropped_img, red_mask, yellow_mask, blue_mask):
     red_com = center_of_mass(red_mask)
     yellow_com = center_of_mass(yellow_mask)
     blue_com = center_of_mass(blue_mask)
+
+    # Display masks and overlay
+    display_image_cv(cropped_img)
+
+    # Display masks and overlay
+    display_image_cv(cropped_img)
 
     def norm_dist(p):
         return np.nan if p is None else calc_distance(p, image_center) / image_diag
