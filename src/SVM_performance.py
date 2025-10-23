@@ -1,6 +1,6 @@
 from sklearn import base
 from sklearn.calibration import CalibratedClassifierCV
-from processing_tools import img_import_resize, processing_image, plot_learning_curve, save_plot
+from processing_tools import img_import_resize, processing_image
 import cv2 as cv
 from pathlib import Path
 import numpy as np
@@ -14,6 +14,7 @@ from settings import folder_path_all
 import pandas as pd
 import matplotlib.pyplot as plt
 import joblib
+from test_tools import plot_learning_curve, save_plot
 
 
 # takes image from setting.py folder_path_all

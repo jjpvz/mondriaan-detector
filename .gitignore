@@ -15,6 +15,7 @@ src/settings.py
 *.ipynb
 mondriaan_detector.py
 test.py
+augment_images.py
 
 # C extensions
 *.so
