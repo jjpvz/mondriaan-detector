@@ -95,3 +95,4 @@ grid_search.fit(X_train, y_train)
 print("\n=== GridSearch Resultaten ===")
 print("Beste parameters:", grid_search.best_params_)
 print(f"Beste CV-score (accuracy): {grid_search.best_score_:.4f}")
+

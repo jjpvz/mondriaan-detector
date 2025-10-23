@@ -64,6 +64,11 @@ clf.fit(X_train, y_train)
 # test the model
 y_pred = clf.predict(X_test)
 
+train_score = clf.score(X_train, y_train)
+test_score  = clf.score(X_test, y_test)
+
+print(f"Train accuracy: {train_score:.3f}")
+print(f"Test accuracy:  {test_score:.3f}")
 
 print(classification_report(y_test, y_pred))
 print(confusion_matrix(y_test, y_pred))
@@ -75,7 +80,7 @@ plt.title("Confusion Matrix")
 plt.show()
 
 # perform cross-validation to evaluate model stability
-cv_scores = cross_val_score(clf, X_train, y_train, cv=4, scoring="accuracy")
+cv_scores = cross_val_score(clf, X_train, y_train, cv=5, scoring="accuracy")
 
 print(f"Cross-validation scores: {cv_scores}")
 print(f"Mean CV accuracy: {np.mean(cv_scores):.4f} (+/- {np.std(cv_scores) * 2:.4f})")

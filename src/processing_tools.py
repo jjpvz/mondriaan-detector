@@ -166,7 +166,7 @@ def preprocess_image(img_rgb):
     """
     
     # --- Background removal ---
-    mask = mask_feature_color(img_rgb, [(67, 95)], 50, 50, True)
+    mask = mask_feature_color(img_rgb, [(40, 95)], 50, 50, True)
     masked_img = cv.bitwise_and(img_rgb, img_rgb, mask=mask)
     
 
@@ -377,9 +377,10 @@ def processing_image(image_set, paths, show_progress=True):
         # image will be preprocessed, roi extracted and background removed
         pre_img = preprocess_image(img)
         
-        red_mask = mask_feature_color(pre_img, [(0, 11), (169, 180)], 110, 70)
-        yellow_mask = mask_feature_color(pre_img, [(18, 38)], 70, 90)
-        blue_mask_temp = mask_feature_color(pre_img, [(105, 130)], 100, 60)
+
+        red_mask = mask_feature_color(pre_img, [(0, 18), (165, 180)], 110, 70)
+        yellow_mask = mask_feature_color(pre_img, [(18, 42)], 70, 90)
+        blue_mask_temp = mask_feature_color(pre_img, [(105, 135)], 100, 60)
         blue_mask = cv.morphologyEx(blue_mask_temp, cv.MORPH_OPEN, k, iterations=1)
         
         # extract features and add image_id and label

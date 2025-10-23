@@ -3,6 +3,7 @@ import cv2 as cv
 import numpy as np
 import pandas as pd
 from processing_tools import preprocess_image, mask_feature_color, prepare_features, display_image_cv
+from pathlib import Path
 import os, sys
 import tkinter as tk
 from tkinter import ttk, filedialog
@@ -113,7 +114,7 @@ def show_prediction_window(image, prediction, probability):
     result_frame.grid(row=1, column=1, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 20))
     
     # Prediction result
-    prediction_text = "✓ Dit is een Mondriaan!" if prediction[0] == 1 else "✗ Dit is geen Mondriaan"
+    prediction_text = "✓ Dit is een Mondriaan!" #if prediction[0] == 1 else "✗ Dit is geen Mondriaan"
     if prediction == "mondriaan1":
         prediction_text = "✓ Dit is Mondriaan 1!"
         prediction_color = '#2E8B57'
@@ -166,6 +167,11 @@ def show_prediction_window(image, prediction, probability):
     y = (root.winfo_screenheight() // 2) - (root.winfo_height() // 2)
     root.geometry(f"+{x}+{y}")
     
+    # Set focus to close button and bind Enter key
+    close_button.focus_set()
+    root.bind('<Return>', lambda event: root.destroy())
+    root.bind('<KP_Enter>', lambda event: root.destroy())
+    
     # Start the GUI
     root.mainloop()
 
@@ -186,6 +192,14 @@ def show_input_selection_window():
     
     def on_file_selected():
         # Open file dialog
+        # determine project root: one level above this src file
+        try:
+            project_root = Path(__file__).resolve().parent.parent
+        except Exception:
+            project_root = None
+
+        initial_dir = str(project_root) if project_root and project_root.exists() else os.path.expanduser("~")
+
         file_path = filedialog.askopenfilename(
             title="Selecteer een afbeelding",
             filetypes=[
@@ -196,7 +210,7 @@ def show_input_selection_window():
                 ("TIFF files", "*.tiff *.tif"),
                 ("Alle bestanden", "*.*")
             ],
-            initialdir=os.path.expanduser("~")
+            initialdir=initial_dir
         )
         
         if file_path:

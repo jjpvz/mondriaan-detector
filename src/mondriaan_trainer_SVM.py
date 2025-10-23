@@ -29,7 +29,6 @@ dataset = pd.DataFrame(features_list)
 
 dataset.to_csv("data.csv", index=False)
 
-
 # separate features and labels
 X = dataset.drop(['image_id','label'], axis=1)
 Y = dataset['label']
@@ -61,6 +60,7 @@ y_pred = clf.predict(X_test)
 
 
 print(classification_report(y_test, y_pred))
+
 print(confusion_matrix(y_test, y_pred))
 
 
@@ -69,6 +69,7 @@ fig, ax = plt.subplots(figsize=(10, 8))
 ConfusionMatrixDisplay.from_predictions(y_test, y_pred, ax=ax, cmap='Blues')
 ax.set_title('Confusion Matrix for Digits Classification')
 plt.tight_layout()
+plt.show()
 
 
 
