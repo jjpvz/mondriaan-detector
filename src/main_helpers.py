@@ -79,7 +79,17 @@ def processing_image(frame):
 
 
 # Display result in a GUI window
-def show_prediction_window(image, prediction, probability):
+def show_prediction_window(image, prediction, probability, auto_close_ms=None):
+    """
+    Toont het voorspellingsresultaat in een GUI window.
+    
+    Args:
+        image: De afbeelding om te tonen
+        prediction: De voorspelling (bijv. "mondriaan1", "niet_mondriaan")
+        probability: De zekerheid van de voorspelling (0-1)
+        auto_close_ms: Optioneel - tijd in milliseconden waarna het venster automatisch sluit.
+                       Als None, wacht het venster op gebruikersactie.
+    """
     # Create main window
     root = tk.Tk()
     root.title("Mondriaan Detector - Resultaat")
@@ -171,6 +181,10 @@ def show_prediction_window(image, prediction, probability):
     close_button.focus_set()
     root.bind('<Return>', lambda event: root.destroy())
     root.bind('<KP_Enter>', lambda event: root.destroy())
+    
+    # Auto-close functionality
+    if auto_close_ms is not None:
+        root.after(auto_close_ms, root.destroy)
     
     # Start the GUI
     root.mainloop()
@@ -299,3 +313,102 @@ def show_input_selection_window():
         return None, None
     else:
         return result['use_camera'], result['image_path']
+
+
+def show_directory_selection_window():
+    """
+    Toont een GUI window om een directory te selecteren.
+    Returns: str (directory_path) or None als geannuleerd
+    """
+    result = {'directory_path': None, 'cancelled': True}
+    
+    def on_directory_selected():
+        # Open directory dialog
+        # determine project root: one level above this src file
+        try:
+            project_root = Path(__file__).resolve().parent.parent
+        except Exception:
+            project_root = None
+
+        initial_dir = str(project_root) if project_root and project_root.exists() else os.path.expanduser("~")
+
+        dir_path = filedialog.askdirectory(
+            title="Selecteer een map",
+            initialdir=initial_dir
+        )
+        
+        if dir_path:
+            result['directory_path'] = dir_path
+            result['cancelled'] = False
+            root.quit()
+    
+    def on_cancel():
+        result['cancelled'] = True
+        root.quit()
+    
+    # Create main window
+    root = tk.Tk()
+    root.title("Mondriaan Detector - Map Selectie")
+    root.geometry("500x400")
+    root.configure(bg='#f0f0f0')
+    root.resizable(False, False)
+    
+    # Center the window
+    root.update_idletasks()
+    x = (root.winfo_screenwidth() // 2) - (250)
+    y = (root.winfo_screenheight() // 2) - (200)
+    root.geometry(f"500x400+{x}+{y}")
+    
+    # Create main frame
+    main_frame = ttk.Frame(root, padding="30")
+    main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+    
+    # Configure grid weights
+    root.columnconfigure(0, weight=1)
+    root.rowconfigure(0, weight=1)
+    main_frame.columnconfigure(0, weight=1)
+    
+    # Title
+    title_label = ttk.Label(main_frame, text="Mondriaan Detector", 
+                           font=('Arial', 20, 'bold'))
+    title_label.grid(row=0, column=0, pady=(0, 10))
+    
+    # Subtitle
+    subtitle_label = ttk.Label(main_frame, text="Selecteer een map", 
+                              font=('Arial', 12))
+    subtitle_label.grid(row=1, column=0, pady=(0, 30))
+    
+    # Directory selection option
+    directory_frame = ttk.LabelFrame(main_frame, text="Map Selectie", padding="20")
+    directory_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(0, 30))
+    main_frame.columnconfigure(0, weight=1)
+    directory_frame.columnconfigure(0, weight=1)
+    
+    directory_desc = ttk.Label(directory_frame, text="Selecteer een map\nvan uw computer", 
+                              font=('Arial', 10), justify='center')
+    directory_desc.grid(row=0, column=0, pady=(0, 15))
+    
+    directory_button = ttk.Button(directory_frame, text="📁 Selecteer Map", 
+                                 command=on_directory_selected,
+                                 style='Accent.TButton')
+    directory_button.grid(row=1, column=0)
+    
+    # Cancel button
+    cancel_button = ttk.Button(main_frame, text="Annuleren", 
+                              command=on_cancel)
+    cancel_button.grid(row=3, column=0, pady=(10, 0))
+    
+    # Handle window close
+    root.protocol("WM_DELETE_WINDOW", on_cancel)
+    
+    # Start the GUI
+    root.mainloop()
+    root.destroy()
+    
+    if result['cancelled']:
+        return None
+    else:
+        return result['directory_path']
+
+
+

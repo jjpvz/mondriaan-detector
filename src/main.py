@@ -4,6 +4,7 @@ import pandas as pd
 from settings import MODEL_PATH, TEST_IMAGE_PATH
 from main_helpers import capture_from_webcam, load_model, processing_image, show_prediction_window, show_input_selection_window
 from processing_tools import resize_image, display_image_cv
+from test_tools import Timer
 
 # make a MODEL_PATH and TEST_IMAGE_PATH in settings.py
 # MODEL_PATH = "mondriaan_svm_model.joblib"
@@ -34,6 +35,7 @@ else:
         print(f"Kon afbeelding niet laden: {image_path}")
         exit(0)
 
+
 # resize the image to 1920x1080 for a standard input size
 resized_frame = resize_image(frame, 1920, 1080)
 # convert BGR to RGB as model was trained on RGB images
@@ -44,6 +46,8 @@ data = processing_image(rgb_frame)
 df = pd.DataFrame(data)
 print(df.head())
 
+
+
 # Extract color coverage feature for black image filtering
 blue_pct = df['blue_pct'].iloc[0]
 red_pct = df['red_pct'].iloc[0]
@@ -53,56 +57,57 @@ print(f"Kleur dekking: {color_coverage:.2f}%")
 
 # make prediction using the loaded model
 pred = clf.predict(df)
+
 # get prediction probabilities, for confidence level
 prob = clf.predict_proba(df)
 
 pred_label = clf.classes_[np.argmax(prob[0])]
 max_p = float(np.max(prob[0]))
 
+# set prediction to temporary prediction for further processing
+temp_pred = pred_label
+
 # Check for confidence threshold
-if max_p >= 0.8:
-    temp_pred = pred_label
-else:
-    temp_pred = "niet_mondriaan"
+if temp_pred != "niet_mondriaan":
+    if max_p < 0.6:
+        temp_pred = "niet_mondriaan"
+    elif max_p > 0.6 and max_p < 0.8:
+        temp_pred = "mondriaan_onbekend"
+    else:
+         # Apply additional rules based on color coverage for each Mondriaan class
+        match temp_pred:
+                case "mondriaan1":
+                    if color_coverage < 5.0 or color_coverage > 20.0:
+                        temp_pred = "niet_mondriaan"
+                        max_p = 0
+                    else:
+                        temp_pred = temp_pred
+                case "mondriaan2":
+                    if color_coverage < 35.0 or color_coverage > 50.0:
+                        temp_pred = "niet_mondriaan"
+                        max_p = 0
+                    else:
+                        temp_pred = temp_pred
+                case "mondriaan3":
+                    if color_coverage < 7.0 or color_coverage > 25.0:
+                        temp_pred = "niet_mondriaan"
+                        max_p = 0
+                    else:
+                        temp_pred = temp_pred
+                case "mondriaan4":
+                    if color_coverage < 5.0 or color_coverage > 20.0:
+                        temp_pred = "niet_mondriaan"
+                        max_p = 0
+                    else:
+                        temp_pred = temp_pred
+                case _:
+                    temp_pred = temp_pred            
 
-# Apply additional rules based on color coverage for each Mondriaan class
-match temp_pred:
-    case "mondriaan1":
-        if color_coverage < 5.0 or color_coverage > 20.0:
-            final_pred = "niet_mondriaan"
-            max_p = 0
-        else:
-            final_pred = temp_pred
-    case "mondriaan2":
-        if color_coverage < 35.0 or color_coverage > 50.0:
-            final_pred = "niet_mondriaan"
-            max_p = 0
-        else:
-            final_pred = temp_pred
-    case "mondriaan3":
-        if color_coverage < 7.0 or color_coverage > 25.0:
-            final_pred = "niet_mondriaan"
-            max_p = 0
-        else:
-            final_pred = temp_pred
-    case "mondriaan4":
-        if color_coverage < 5.0 or color_coverage > 20.0:
-            final_pred = "niet_mondriaan"
-            max_p = 0
-        else:
-            final_pred = temp_pred
-    case "niet_mondriaan":
-        final_pred = temp_pred
-    case _:
-        final_pred = temp_pred
-
-# Filter out black/empty images based on color coverage
-if color_coverage < 5.0:
-    final_pred = "niet_mondriaan"
-    print(f"Afbeelding gefilterd: te weinig kleur (dekking: {color_coverage:.2f}%)")
+final_pred = temp_pred
 
 print(f"Voorspelling: {final_pred}")
 print(f"Zekerheid voor ({pred_label}): {max_p*100:.2f}%")
 
 show_prediction_window(resized_frame, final_pred, max_p)
+
 

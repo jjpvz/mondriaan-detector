@@ -16,6 +16,7 @@ src/settings.py
 mondriaan_detector.py
 test.py
 augment_images.py
+presentatie_mondriaan_detector.mp4
 
 # C extensions
 *.so

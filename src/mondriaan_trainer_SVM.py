@@ -82,3 +82,7 @@ print(f"Mean CV accuracy: {np.mean(cv_scores):.4f} (+/- {np.std(cv_scores) * 2:.
 test_score = clf.score(X_test, y_test)
 print(f"Test set accuracy: {test_score:.4f}")
 
+# save the trained model to a file for later use
+joblib.dump(clf, "mondriaan_svm_model.joblib")
+print("Model opgeslagen als 'mondriaan_svm_model.joblib'")
+
