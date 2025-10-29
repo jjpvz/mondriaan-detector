@@ -1,16 +1,35 @@
 import cv2 as cv
 import numpy as np
 import pandas as pd
-from settings import MODEL_PATH, TEST_IMAGE_PATH
-from main_helpers import capture_from_webcam, load_model, processing_image, show_prediction_window, show_input_selection_window
+from main_helpers import capture_from_webcam, load_model, processing_image, show_prediction_window, show_input_selection_window, resource_path
 from processing_tools import resize_image, display_image_cv
 from test_tools import Timer
 
-# make a MODEL_PATH and TEST_IMAGE_PATH in settings.py
-# MODEL_PATH = "mondriaan_svm_model.joblib"
-# TEST_IMAGE_PATH = folder_path / "mondriaan3 (1).JPG" 
-# Test image can be changed to any image you want to test
-# joblib model must be in the same folder as the src folder or give full path
+"""
+Main script for Mondriaan detector
+Authors :
+- Julian van Zwol
+- Sohrab Hakimi
+- Roel van Eeten
+
+This script allows the user to capture an image from the webcam or select an image file,
+processes the image to extract features, and uses a pre-trained SVM model to predict which 
+type of Mondriaan painting the image contains or if it is not a Mondriaan painting.
+
+To use this script:
+make sure the name of the model file is the same as in MODEL_FILE variable below
+make sure the model file is in the same folder as the src folder or give full path in MODEL_PATH variable below
+Run the script, a window will appear to choose between webcam or file input
+If webcam is chosen, a window will open showing the webcam feed, press space to capture an image
+If file is chosen, a file dialog will open to select an image file
+The script will then process the image and display the prediction result in a new window
+"""
+
+# Define model file name
+MODEL_FILE = "mondriaan_svm_model.joblib"
+
+# Get the full model path
+MODEL_PATH = resource_path(MODEL_FILE)
 
 # load the model from model path if not found, raise error
 clf = load_model(MODEL_PATH)

@@ -15,18 +15,23 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import joblib
 
+"""
+Gridsearch SVM trainer script
+Authors : 
+- Julian van Zwol
+- Sohrab Hakimi
+- Roel van Eeten
 
-# takes image from setting.py folder_path_all
-# in img_import_resize the images are imported from subfolders, are resized to 1920x1080 and returned in img_set
-# paths are the paths of the images, used to extract the label from the parent folder name
-#img_set, paths = img_import_resize(folder_path_all)
+gridsearch file to find the best hyperparameters for the SVM model
+In param grid the to be tested hyperparameters are defined, change them to test other values
+The best parameters and the best score are printed at the end of the script
 
-# in processing_image the images are preprocessed, color masks are made and features are extracted
-# the features are returned as a list of dictionaries
-#features_list = processing_image(img_set, paths)
-
-# create a dataframe from the features list if needed
-# Load dataset: prefer cached CSV, otherwise generate from image folders
+to use this script:
+make sure the images are in the folder defined in settings.py folder_path_all
+the images should be in subfolders named after their labels
+Or you can place a data.csv file in the same folder as this script
+The script will search for data.csv first, if not found it will generate features from the images and save to data.csv (this will take a while)
+"""
 data_csv_path = Path("data.csv")
 if data_csv_path.exists():
     print(f"Lezen van dataset uit: {data_csv_path}")

@@ -9,12 +9,29 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 from PIL import Image, ImageTk
 
+"""
+Main helper functions for Mondriaan detector
+Authors :
+- Julian van Zwol
+- Sohrab Hakimi
+- Roel van Eeten
+
+This file contains helper functions for the main script, including:
+- loading the model
+- capturing image from webcam
+- processing the image to extract features
+- displaying the prediction result in a GUI window
+"""
+
+
+# function to load the model
 def load_model(model_path: str):
     if not os.path.exists(model_path):
         raise FileNotFoundError(f"Modelbestand niet gevonden: {model_path}")
     clf = joblib.load(model_path)
     return clf
 
+# function to get resource path
 def resource_path(relative_path):
     """Geeft het juiste pad naar een resource, ongeacht of het script of exe draait."""
     try:
@@ -23,6 +40,7 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")  # dev pad (Python)
     return os.path.join(base_path, relative_path)
 
+# function to capture image from webcam
 def capture_from_webcam() -> np.ndarray:
     """Open de webcam en maak een foto zodra je op SPATIE drukt. q/Esc = stoppen."""
     cap = cv.VideoCapture(0)
@@ -38,7 +56,7 @@ def capture_from_webcam() -> np.ndarray:
             print("Kon geen frame van de webcam lezen.")
             break
 
-        # Toon het frame zonder overlay tekst, instructies staan in window titel
+        
         cv.imshow("Webcam - Druk op SPATIE om foto te maken, Q/ESC om te stoppen", frame)
         key = cv.waitKey(1) & 0xFF
 
@@ -46,27 +64,46 @@ def capture_from_webcam() -> np.ndarray:
             frame_to_return = frame.copy()
             print("Foto gemaakt!")
             break
-        elif key in (ord('q'), 27):  # q of Esc
+        elif key in (ord('q'), 27):  # q or Esc
             break
 
     cap.release()
     cv.destroyAllWindows()
     return frame_to_return
 
+# function to process image and extract features
 def processing_image(frame):
+    """
+    function to process an image completly and get the features for prediction
+    this function does:
+    1. preprocess the image
+    2. create color masks for red, yellow and blue
+    3. extract features from the preprocessed image and color masks
+        
+    Args:
+        frame: input image (numpy array)
+    Returns:
+        processed_features: list of extracted features for prediction
+    """
+    
+    
     processed_features = []
+    # kernel for morphological operations
     k = cv.getStructuringElement(cv.MORPH_RECT, (15,15))
     # preprocess image for feature extraction    
     pre_img = preprocess_image(frame)
 
+    # uncomment to display preprocessed image
     #display_image_cv(pre_img, "Voorverwerkte afbeelding")
 
     # create color masks    
     red_mask = mask_feature_color(pre_img, [(0, 11), (169, 180)], 110, 70)
     yellow_mask = mask_feature_color(pre_img, [(18, 38)], 70, 90)
     blue_mask_temp = mask_feature_color(pre_img, [(105, 130)], 100, 60)
+    # apply morphological opening to extra clean up blue mask
     blue_mask = cv.morphologyEx(blue_mask_temp, cv.MORPH_OPEN, k, iterations=1)
 
+    # uncomment to display color masks
     #display_image_cv(red_mask, "Rood masker")
     #display_image_cv(yellow_mask, "Geel masker")
     #display_image_cv(blue_mask, "Blauw masker")
@@ -81,14 +118,13 @@ def processing_image(frame):
 # Display result in a GUI window
 def show_prediction_window(image, prediction, probability, auto_close_ms=None):
     """
-    Toont het voorspellingsresultaat in een GUI window.
-    
+    shows a GUI window with the image, prediction and probability
     Args:
-        image: De afbeelding om te tonen
-        prediction: De voorspelling (bijv. "mondriaan1", "niet_mondriaan")
-        probability: De zekerheid van de voorspelling (0-1)
-        auto_close_ms: Optioneel - tijd in milliseconden waarna het venster automatisch sluit.
-                       Als None, wacht het venster op gebruikersactie.
+        image: input image (numpy array)
+        prediction: predicted label (str)
+        probability: probability of the prediction (float)
+        auto_close_ms: time in milliseconds to auto-close the window (int or None)
+    Returns: None
     """
     # Create main window
     root = tk.Tk()
@@ -124,7 +160,7 @@ def show_prediction_window(image, prediction, probability, auto_close_ms=None):
     result_frame.grid(row=1, column=1, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 20))
     
     # Prediction result
-    prediction_text = "✓ Dit is een Mondriaan!" #if prediction[0] == 1 else "✗ Dit is geen Mondriaan"
+    prediction_text = "✓ Dit is een Mondriaan!" 
     if prediction == "mondriaan1":
         prediction_text = "✓ Dit is Mondriaan 1!"
         prediction_color = '#2E8B57'
@@ -191,11 +227,12 @@ def show_prediction_window(image, prediction, probability, auto_close_ms=None):
 
     return
 
-
+# function to show input selection window, for camera or file
 def show_input_selection_window():
     """
-    Toont een GUI window om de input methode te kiezen: camera of bestand.
-    Returns: tuple (use_camera: bool, image_path: str or None)
+    shows a GUI window to select input method (camera or file)
+    args: None
+    Returns: tuple (use_camera: bool, image_path: str) or (None, None) if cancelled
     """
     result = {'use_camera': None, 'image_path': None, 'cancelled': True}
     
@@ -314,11 +351,12 @@ def show_input_selection_window():
     else:
         return result['use_camera'], result['image_path']
 
-
+# function to show directory selection window
 def show_directory_selection_window():
     """
-    Toont een GUI window om een directory te selecteren.
-    Returns: str (directory_path) or None als geannuleerd
+    shows a GUI window to select a directory.
+    args: None
+    Returns: str (directory_path) or None if cancelled
     """
     result = {'directory_path': None, 'cancelled': True}
     

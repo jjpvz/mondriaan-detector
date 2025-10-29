@@ -17,19 +17,22 @@ import joblib
 from test_tools import plot_learning_curve, save_plot
 
 
-# takes image from setting.py folder_path_all
-# in img_import_resize the images are imported from subfolders, are resized to 1920x1080 and returned in img_set
-# paths are the paths of the images, used to extract the label from the parent folder name
-#img_set, paths = img_import_resize(folder_path_all)
+"""
+SVM performance evaluation script
+Authors :
+- Julian van Zwol
+- Sohrab Hakimi
+- Roel van Eeten
 
-# in processing_image the images are preprocessed, color masks are made and features are extracted
-# the features are returned as a list of dictionaries
-#features_list = processing_image(img_set, paths)
+This script trains and evaluates an SVM model to classify Mondriaan paintings
+using extracted features from images. It evaluates the model's performance,
 
-# create a dataframe from the features list
-#dataset = pd.DataFrame(features_list)
 
-#dataset.to_csv("data.csv", index=False)
+To use this script:
+make sure the dataset is available as data.csv in the same folder as this script.
+Run the script, it will load the dataset, train the SVM model, evaluate its performance,
+and display the confusion matrix and learning curve.
+"""
 
 data_csv_path = Path("data.csv")
 if data_csv_path.exists():

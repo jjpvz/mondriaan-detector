@@ -5,28 +5,36 @@ from matplotlib import pyplot as plt
 from sklearn.model_selection import learning_curve
 from scipy.stats import entropy
 
+"""
+test tools file
+Authors :
+- Julian van Zwol
+- Sohrab Hakimi
+- Roel van Eeten
 
+this file contains helper functions for testing and evaluating models, including:
+- Timer class to measure elapsed time
+- scatter_features_raw function to plot scatter plots of two features with individual points
+- plot_learning_curve function to plot learning curves
+- save_plot function to save plots with script name
+
+"""
+
+
+# timer class to measure elapsed time
 class Timer:
     """
-    Een klasse om de tijd bij te houden over een deel van de code.
-    
-    Gebruik:
-        timer = Timer()
-        timer.start()
-        # ... code hier ...
-        timer.stop()
-        timer.print()
-        
-    Of met milliseconden:
-        timer = Timer(unit='ms')
-        timer.start()
-        # ... code hier ...
-        timer.stop()
+    functions in this class:
+    - start(): start the timer
+    - stop(): stop the timer
+    - print(): print the elapsed time
+    - reset(): reset the timer
+    - get_elapsed_time(): gives the elapsed time in seconds or milliseconds
     """
     
     def __init__(self, unit='s'):
         """
-        Initialiseer de timer.
+        Initialize the timer.
         
         Args:
             unit (str): 's' voor seconden, 'ms' voor milliseconden
@@ -86,7 +94,7 @@ class Timer:
                 print(f"Verstreken tijd: {self.elapsed_time:.4f} seconden")
     
     def reset(self):
-        """Reset de timer."""
+        """Reset the timer."""
         self.start_time = None
         self.end_time = None
         self.elapsed_time = None
@@ -94,7 +102,7 @@ class Timer:
     
     def get_elapsed_time(self):
         """
-        Geef de verstreken tijd terug.
+        gives the elapsed time in the specified unit.
         
         Returns:
             float: Tijd in seconden als unit='s', tijd in milliseconden als unit='ms'
@@ -107,7 +115,7 @@ class Timer:
         else:
             return self.elapsed_time
 
-
+# function for scatter plot of two features with individual points
 def scatter_features_raw(df, x_feat, y_feat):
     plt.figure(figsize=(8,6))
 
@@ -128,6 +136,7 @@ def scatter_features_raw(df, x_feat, y_feat):
     plt.legend()
     plt.show()
 
+# function to plot learning curve
 def plot_learning_curve(estimator, X, y, axes=None, ylim=None, cv=None,
                         n_jobs=None, train_sizes=np.linspace(.1, 1.0, 10)):
     if axes is None:
@@ -164,6 +173,7 @@ def plot_learning_curve(estimator, X, y, axes=None, ylim=None, cv=None,
 
     return plt
 
+# function to save learning curve plot with script name
 def save_plot(plt):
     script_name = os.path.splitext(os.path.basename(__file__))[0]
     filename = f"{script_name}_learning_curve.png"

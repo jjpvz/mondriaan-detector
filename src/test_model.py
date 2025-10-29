@@ -6,6 +6,27 @@ from settings import MODEL_PATH, TEST_IMAGE_PATH
 from main_helpers import capture_from_webcam, load_model, processing_image, show_directory_selection_window, show_prediction_window, show_input_selection_window
 from processing_tools import resize_image, display_image_cv
 
+"""
+test model script 
+Authors :
+- Julian van Zwol
+- Sohrab Hakimi
+- Roel van Eeten
+
+This script allows the user to test the trained Mondriaan SVM model
+using either a single image from webcam/file or multiple images from a selected folder.
+The script processes the images, makes predictions using the loaded model, and displays the results.
+
+to use this script:
+make sure the name of the model file is in the MODEL_PATH variable in settings.py
+make sure the model file is in the same folder as the src folder or give full path in MODEL_PATH variable in settings.py
+choose in the four first variables below how to run the test.
+
+Run the script, the outcome will be worked out based on the selected variables.
+
+"""
+
+
 # Set this true to run full test, otherwise only ML model
 test_full = True
 
@@ -19,12 +40,15 @@ image_label_equal = False
 # set to None to disable automatic close
 automatic_close_ms = 2000  # milliseconds
 
+# validate settings, some settings cannot be combined
 if single_test_image == True and image_label_equal == True:
     print("Fout: single_test_image en image_label_equal kunnen niet beide waar zijn.")
     exit(0)
 
+# load the model from model path if not found, raise error
 clf = load_model(MODEL_PATH)
 
+# counters for accuracy calculation
 times = 0
 wrong_times = 0
 
@@ -61,7 +85,7 @@ if single_test_image:
     # make prediction using the loaded model
     
     if test_full:
-        # Extract color coverage feature for black image filtering
+        # Extract color coverage feature for extra filter
         blue_pct = df['blue_pct'].iloc[0]
         red_pct = df['red_pct'].iloc[0]
         yellow_pct = df['yellow_pct'].iloc[0]
@@ -168,7 +192,7 @@ else:
         print(df.head())
         
         if test_full == True:
-            # Extract color coverage feature for black image filtering
+            # Extract color coverage feature for extra filter
             blue_pct = df['blue_pct'].iloc[0]
             red_pct = df['red_pct'].iloc[0]
             yellow_pct = df['yellow_pct'].iloc[0]
@@ -236,6 +260,7 @@ else:
         print(f"Voorspelling: {final_pred}")
         print(f"Zekerheid voor ({final_pred}): {max_p*100:.2f}%")
 
+        # validate prediction if image label is equal to image name, record correct and wrong predictions
         if image_label_equal == True:
             if image_label == "mondriaan1" or image_label == "mondriaan2" or image_label == "mondriaan3" or image_label == "mondriaan4" or image_label == "niet_mondriaan" or image_label == "mondriaan_onbekend":
                 if image_label == final_pred:

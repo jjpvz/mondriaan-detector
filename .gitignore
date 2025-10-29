@@ -7,9 +7,18 @@ alldata/*
 scaled/*
 alldata_old/*
 alldata_full/*
+eval_outputs/*
+complete_testset_label/*
+test_set_nietmondriaan/*
+testset_2_label/*
+test_set/*
+test_set_2/*
+testset_kijkhoek_20/*
+presentatie_set/*
+
 
 # Machine learning model files
-*.joblib
+mondriaan_knn_model.joblib
 
 src/settings.py
 *.ipynb

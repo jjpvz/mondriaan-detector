@@ -6,8 +6,44 @@ import numpy as np
 from scipy.stats import entropy
 import pandas as pd
 
+"""
+Processing tools file
+Authors :
+- Julian van Zwol
+- Sohrab Hakimi
+- Roel van Eeten
 
+This file contains image processing and feature extraction functions, including:
+- display_image: display image using matplotlib
+- display_image_cv: display image using cv2 in a separate window
+- resize_image: resize image to standard dimensions while maintaining aspect ratio
+- mask_feature_color: create color masks based on HSV ranges
+- getLargestContour: find the largest contour in a binary image
+- getContourExtremes: get extreme points of a contour
+- order_quad_points: order quadrilateral points
+- get_quadrilateral_from_contour: get quadrilateral points from contour
+- warp_image: warp image to rectangle based on largest contour
+- preprocess_image: preprocess image by removing background, extracting ROI, and warping
+- apply_morph_operations: apply morphological operations to a mask
+- color_percentage: calculate percentage of color pixels in a mask
+- center_of_mass: calculate center of mass of a color mask
+- compute_aspect_ratio: compute aspect ratio of an image
+- calc_distance: calculate Euclidean distance between two points
+- color_diversity: calculate color diversity using entropy
+- unique_hues: count unique hues in an image
+- hue_variance: calculate hue variance in an image
+- contour_features: calculate contour features like area and perimeter
+- prepare_features: prepare features from processed image and color masks
+- img_import_resize: import and resize images from folder
+- processing_image: preprocess images and extract features
+"""
+
+# function to display image using matplotlib inline
 def display_image(img, title=None,):
+    """
+    args: img: image in RGB format
+    title: title of the plot
+    """
     plt.figure(figsize=(6,6))
     plt.imshow(img)
     if title:
@@ -15,8 +51,13 @@ def display_image(img, title=None,):
     plt.axis('off')
     plt.show()
 
+# function to display image using cv2 show in another window
 def display_image_cv(img, title="Image", auto_close_ms=None):
-    
+    """
+    args: img: image in RGB format
+    title: window title
+    auto_close_ms: if set, window will close automatically after this time in milliseconds
+    """
     brg_img = cv.cvtColor(img, cv.COLOR_RGB2BGR)
     img = brg_img
     cv.namedWindow(title, cv.WINDOW_NORMAL)
@@ -25,7 +66,7 @@ def display_image_cv(img, title="Image", auto_close_ms=None):
     if auto_close_ms is not None:
         cv.waitKey(auto_close_ms)
     else:
-        cv.waitKey(0)      # wacht tot je een toets indrukt
+        cv.waitKey(0)      # wait for a key press
     cv.destroyAllWindows()
 
 def resize_image(img, standard_width, standard_height):
@@ -70,18 +111,28 @@ def resize_image(img, standard_width, standard_height):
     return canvas
 
 
-
+# function to create color mask for given HSV ranges
 def mask_feature_color(img_rgb, h_range, s_min, v_min, invert=False):
+    """
+    args:
+        img_rgb: input image in RGB format
+        h_range: list of tuples with (minH, maxH) values for hue ranges
+        s_min: minimum saturation value
+        v_min: minimum value (brightness) value
+        invert: if True, invert the mask
+    Returns:
+        mask: binary mask for the specified color ranges
+    """
     hsv = cv.cvtColor(img_rgb, cv.COLOR_RGB2HSV)
     masks = []
-    for (h1, h2) in h_range:  # lijst van (minH, maxH) tuples
+    for (h1, h2) in h_range:  # list of (minH, maxH) tuples
         lower = (h1, s_min, v_min)
         upper = (h2, 255, 255)
         masks.append(cv.inRange(hsv, lower, upper))
     mask = masks[0]
     for m in masks[1:]:
         mask = cv.bitwise_or(mask, m)
-    # kleine schoonmaak
+    # clean up mask with morphological operations
     kernel = cv.getStructuringElement(cv.MORPH_RECT, (7,7))
     mask = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel, iterations=1)
     mask = cv.morphologyEx(mask, cv.MORPH_OPEN,  kernel, iterations=1)
@@ -89,13 +140,27 @@ def mask_feature_color(img_rgb, h_range, s_min, v_min, invert=False):
         mask = cv.bitwise_not(mask)
     return mask
 
+# function to get largest contour from binary image
 def getLargestContour(img_BW):
+    """
+    args:
+        img_BW: binary image
+    returns:
+        largest contour found in the binary image
+    """
     contours, _ = cv.findContours(img_BW.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
     contour = max(contours, key=cv.contourArea)
 
     return np.squeeze(contour)
 
+# function to get contour extremes
 def getContourExtremes(contour):
+    """
+    args:
+        contour: input contour
+    returns:
+        left, right, top, bottom points of the contour
+    """
     left = contour[contour[:, 0].argmin()]
     right = contour[contour[:, 0].argmax()]
     top = contour[contour[:, 1].argmin()]
@@ -103,8 +168,15 @@ def getContourExtremes(contour):
 
     return np.array((left, right, top, bottom))
 
+# function to order quadrilateral points
 def order_quad_points(pts):
-   # sort the 4 points as top-left, top-right, bottom-right, bottom-left
+    """
+    sort the 4 points as top-left, top-right, bottom-right, bottom-left
+    args:
+        pts: array of 4 points
+    returns:
+        ordered points: TL, TR, BR, BL
+    """
     pts = np.array(pts, dtype=np.float32)
     s = pts.sum(axis=1)
     diff = np.diff(pts, axis=1).ravel()
@@ -114,7 +186,14 @@ def order_quad_points(pts):
     bl = pts[np.argmax(diff)]
     return np.array([tl, tr, br, bl], dtype=np.float32)
 
+# function to get quadrilateral from contour
 def get_quadrilateral_from_contour(contour):
+    """
+    args:
+        contour: input contour
+    returns:
+        quadrilateral points ordered as TL, TR, BR, BL
+    """
     # get corners from contour
     peri = cv.arcLength(contour, True)
     approx = cv.approxPolyDP(contour, 0.02 * peri, True)
@@ -125,15 +204,20 @@ def get_quadrilateral_from_contour(contour):
     box = cv.boxPoints(rect)
     return order_quad_points(box)
 
-
+# function to warp image to a rectangle based on largest contour
 def warp_image(cropped_img):
-    
+    """
+    args:
+        cropped_img: input cropped image
+    returns:
+        warped image
+    """
     gray_img = cv.cvtColor(cropped_img, cv.COLOR_RGB2GRAY)
     contour_in_cropped = getLargestContour(gray_img)
-    # 1) src points from contour
+    # src points from contour
     src = get_quadrilateral_from_contour(contour_in_cropped)  # TL,TR,BR,BL
 
-    # 2) targetsize of quad
+    # target dimensions
     (tl, tr, br, bl) = src
     w_top  = np.linalg.norm(tr - tl)
     w_bot  = np.linalg.norm(br - bl)
@@ -142,7 +226,7 @@ def warp_image(cropped_img):
     maxW = int(round(max(w_top, w_bot)))
     maxH = int(round(max(h_left, h_right)))
 
-    # 3) doelpunten en homografie
+    # destination points and homography
     dst = np.array([
         [0,     0],
         [maxW-1,0],
@@ -152,40 +236,53 @@ def warp_image(cropped_img):
 
     M = cv.getPerspectiveTransform(src, dst)
 
-    # 4) warping
+    # warping
     warped = cv.warpPerspective(cropped_img, M, (maxW, maxH),
                                 flags=cv.INTER_LINEAR,
                                 borderMode=cv.BORDER_REPLICATE)
     return warped
 
+# function to preprocess image
 def preprocess_image(img_rgb):
     """
-    Preprocess a painting image.
-    Steps:
-    1. Remove background
-    2. Extract ROI using largest contour
-    Returns:
-        cropped_img
+    Process the image as follows:
+    - Remove background based on color masking
+    - Extract ROI via largest contour
+    - warp the image to right size
+    args:
+        img_rgb: input image in RGB format
+    returns:
+        warped_img: preprocessed image
     """
     
-    # --- Background removal ---
+    # Background removal
     mask = mask_feature_color(img_rgb, [(40, 95)], 50, 50, True)
     masked_img = cv.bitwise_and(img_rgb, img_rgb, mask=mask)
-    
 
-    # --- Extract ROI via largest contour ---
+    # Extract ROI via largest contour
     gray = cv.cvtColor(masked_img, cv.COLOR_RGB2GRAY)
     contour = getLargestContour(gray)
     left, right, top, bottom = getContourExtremes(contour)
     x_min, x_max = left[0], right[0]
     y_min, y_max = top[1], bottom[1]
     cropped_img = masked_img[y_min:y_max, x_min:x_max]
-    
+
+    # Warp image to rectangle
     warped_img = warp_image(cropped_img)
     
     return warped_img
 
+# function to apply morphological operations and return results
 def apply_morph_operations(mask, masked_img, kernel_size=3):
+    """
+    args:
+        mask: binary mask
+        masked_img: image with background removed
+        kernel_size: size of the morphological kernel
+    returns:
+        dictionary with results of different morphological operations
+    """
+    # create kernel
     kernel = np.ones((kernel_size, kernel_size), np.uint8)
 
     # 1. Erode
@@ -222,12 +319,27 @@ def apply_morph_operations(mask, masked_img, kernel_size=3):
         "open_close": img_oc
     }
 
+# function to calculate color percentage of a mask
 def color_percentage(mask):
+    """
+    args:
+        mask: binary mask
+    returns:
+        percentage of color pixels in the mask
+    """
     total_pixels = mask.size
     color_pixels = cv.countNonZero(mask)
     return (color_pixels / total_pixels) * 100
 
+# function to calculate center of mass of a color mask
 def center_of_mass(mask, min_area=500):
+    """
+    args:
+        mask: binary mask
+        min_area: minimum area to consider as valid color mass
+    returns:
+        (cx, cy): center of mass coordinates
+    """
     # min_area: low threshold to consider as valid color mass
     color_pixels = int(cv.countNonZero(mask))
     if color_pixels < min_area:
@@ -241,16 +353,40 @@ def center_of_mass(mask, min_area=500):
     cy = m["m01"] / m["m00"]
     return (float(cx), float(cy))
 
+# function to compute aspect ratio of an image
 def compute_aspect_ratio(image):
+    """
+    args:
+        image: input image
+    returns:
+        aspect ratio (width / height)
+    """
     height, width = image.shape[:2]
     if height == 0:
         return np.nan
     return width / height
 
+# function to calculate Euclidean distance between two points
 def calc_distance(point1, point2):
+    """
+    args:
+        point1: first point (x1, y1)
+        point2: second point (x2, y2)
+    returns:
+        Euclidean distance between point1 and point2
+    """
     return np.linalg.norm(np.array(point1) - np.array(point2))
 
+# function to calculate color diversity using entropy
 def color_diversity(img: np.ndarray, s_threshold=30, v_threshold=30) -> float:
+    """
+    args:
+        img: input image in BGR format
+        s_threshold: minimum saturation to consider
+        v_threshold: minimum value (brightness) to consider
+    returns:
+        color diversity as entropy of hue distribution
+    """
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     h, s, v = cv.split(hsv)
     mask = cv.bitwise_and(cv.inRange(s, s_threshold, 255),
@@ -259,7 +395,15 @@ def color_diversity(img: np.ndarray, s_threshold=30, v_threshold=30) -> float:
     hist = hist / hist.sum() if hist.sum() > 0 else hist
     return float(entropy(hist + 1e-6))
 
+# function to count unique hues in an image
 def unique_hues(img: np.ndarray, threshold=0.01) -> int:
+    """
+    args:
+        img: input image in BGR format
+        threshold: minimum normalized frequency to consider a hue as present
+    returns:
+        number of unique hues in the image
+    """
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     h, s, v = cv.split(hsv)
     mask = cv.bitwise_and(cv.inRange(s, 30, 255), cv.inRange(v, 30, 255))
@@ -267,13 +411,27 @@ def unique_hues(img: np.ndarray, threshold=0.01) -> int:
     hist = hist / hist.sum() if hist.sum() > 0 else hist
     return int(np.sum(hist > threshold))
 
+# function to calculate hue variance in an image
 def hue_variance(img: np.ndarray) -> float:
+    """
+    args:
+        img: input image in BGR format
+    returns:
+        variance of hue values in the image
+    """
     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)
     h, s, v = cv.split(hsv)
     mask = (s > 30) & (v > 30)
     return float(np.var(h[mask]))
 
+# function to calculate contour features: area and perimeter
 def contour_features(mask: np.ndarray):
+    """
+    args:
+        mask: binary mask
+    returns:
+        dictionary with area and perimeter of the largest contour
+    """
     contours, _ = cv.findContours(mask, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
     if not contours:
         return {'area': 0.0, 'perimeter': 0.0}
@@ -282,7 +440,18 @@ def contour_features(mask: np.ndarray):
     perimeter = cv.arcLength(largest, True)
     return {'area': area, 'perimeter': perimeter}
 
+# function to prepare features from processed image and color masks
 def prepare_features(cropped_img, red_mask, yellow_mask, blue_mask):
+    """
+    Calculate features from the cropped and warped image and color masks
+    args:
+        cropped_img: preprocessed image
+        red_mask: binary mask for red color
+        yellow_mask: binary mask for yellow color
+        blue_mask: binary mask for blue color
+    returns:
+        features: dictionary with calculated features
+    """
     h, w = cropped_img.shape[:2]
     image_center = (w/2, h/2)
     image_diag = np.sqrt(w**2 + h**2)
@@ -321,6 +490,15 @@ def prepare_features(cropped_img, red_mask, yellow_mask, blue_mask):
 
 # pipeline function to import en resize images
 def img_import_resize(folder_path_all, show_progress=True):
+    """
+    Read images from folder ans resize them directly to reduce memory usage
+    args:
+        folder_path_all: Path object to the main folder with subfolders of images
+        show_progress: if True, show progress in console
+    returns:
+        img_rgb: list of images in RGB format
+        files_selected: list of file paths corresponding to the images
+    """
     files_selected = []
    
     # Loop over subfolders
@@ -369,6 +547,15 @@ def img_import_resize(folder_path_all, show_progress=True):
 
 # pipeline function to preprocess images and extract features
 def processing_image(image_set, paths, show_progress=True):
+    """
+    Preprocess images, create masks and extract features
+    args:
+        image_set: list of images in RGB format
+        paths: list of file paths corresponding to the images
+        show_progress: if True, show progress in console
+    returns:
+        processed_features: list of feature dictionaries for each image
+    """
     processed_features = []
     total_images = len(image_set)
     k = cv.getStructuringElement(cv.MORPH_RECT, (15,15))
